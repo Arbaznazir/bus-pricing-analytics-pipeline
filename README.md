@@ -641,8 +641,8 @@ I'm passionate about data engineering and building systems that solve real busin
 **Let's connect:**
 
 - 🐙 **GitHub**: [@Arbaznazir](https://github.com/Arbaznazir)
-- 💼 **LinkedIn**: [Connect with me on LinkedIn]
-- 📧 **Email**: [arbaz.nazir@example.com]
+- 💼 **LinkedIn**: [Connect with me on LinkedIn](https://linkedin.com/in/arbaz-nazir1)
+- 📧 **Email**: [arbaznazir4@gmail.com]
 
 **I'm available for:**
 
