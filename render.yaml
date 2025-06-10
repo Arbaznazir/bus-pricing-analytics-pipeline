@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: bus-pricing-api
+    env: docker
+    dockerfilePath: ./api/Dockerfile
+    plan: free
+    region: oregon
+    buildCommand: ""
+    startCommand: ""
+    healthCheckPath: /health
+    envVars:
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: bus-pricing-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: bus-pricing-db
+          property: port
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: bus-pricing-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: bus-pricing-db
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: bus-pricing-db
+          property: database
+      - key: API_HOST
+        value: "0.0.0.0"
+      - key: API_PORT
+        value: "8000"
+      - key: LOG_LEVEL
+        value: "INFO"
+
+databases:
+  - name: bus-pricing-db
+    plan: free
+    databaseName: busdb
+    user: bususer

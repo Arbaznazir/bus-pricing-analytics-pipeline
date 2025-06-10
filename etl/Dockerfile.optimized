@@ -1,0 +1,57 @@
+FROM openjdk:11-jre-slim
+
+# Set environment variables early
+ENV PYTHONPATH=/app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYSPARK_PYTHON=python3
+ENV PYSPARK_DRIVER_PYTHON=python3
+ENV PIP_DEFAULT_TIMEOUT=100
+ENV PIP_RETRIES=3
+
+# Install system packages with retries and cleanup
+RUN apt-get update && apt-get install -y \
+  python3 \
+  python3-pip \
+  python3-dev \
+  wget \
+  curl \
+  && rm -rf /var/lib/apt/lists/* \
+  && apt-get clean
+
+# Set working directory
+WORKDIR /app
+
+# Download PostgreSQL JDBC driver with retries
+RUN wget --timeout=30 --tries=3 --retry-connrefused \
+  https://jdbc.postgresql.org/download/postgresql-42.6.0.jar \
+  -O /opt/postgresql-42.6.0.jar
+
+# Configure Spark to use PostgreSQL JDBC driver
+ENV SPARK_CLASSPATH=/opt/postgresql-42.6.0.jar
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies with optimizations
+RUN pip3 install --upgrade pip && \
+  pip3 install --no-cache-dir \
+  --timeout 100 \
+  --retries 3 \
+  --trusted-host pypi.org \
+  --trusted-host pypi.python.org \
+  --trusted-host files.pythonhosted.org \
+  -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create data directories
+RUN mkdir -p /app/data/raw /app/data/processed /app/data/error
+
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD python3 -c "import sys; sys.exit(0)"
+
+# Run the ETL job
+CMD ["python3", "etl_job.py"] 

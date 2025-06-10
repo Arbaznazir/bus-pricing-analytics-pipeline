@@ -17,7 +17,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from . import models, schemas, crud
+import models
+import schemas
+import crud
 
 # Configure logging
 logging.basicConfig(

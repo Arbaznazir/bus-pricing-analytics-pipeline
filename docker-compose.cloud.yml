@@ -25,7 +25,7 @@ services:
 
   # FastAPI Service
   api:
-    image: arbaznazir/bus-pricing-api:latest
+    image: arbaz4/bus-pricing-api:latest
     build:
       context: ./api
       dockerfile: Dockerfile
@@ -55,7 +55,7 @@ services:
 
   # ETL Service
   etl:
-    image: arbaznazir/bus-pricing-etl:latest
+    image: arbaz4/bus-pricing-etl:latest
     build:
       context: ./etl
       dockerfile: Dockerfile
@@ -88,7 +88,7 @@ services:
 
   # Scheduler Service
   scheduler:
-    image: arbaznazir/bus-pricing-scheduler:latest
+    image: arbaz4/bus-pricing-scheduler:latest
     build:
       context: ./scheduler
       dockerfile: Dockerfile
@@ -123,7 +123,7 @@ services:
 
   # Data Simulator (for cloud demo)
   data_simulator:
-    image: arbaznazir/bus-pricing-simulator:latest
+    image: arbaz4/bus-pricing-simulator:latest
     build:
       context: ./data_simulator
       dockerfile: Dockerfile

@@ -2,7 +2,7 @@
 # This script builds and pushes all Docker images to Docker Hub
 
 # Configuration
-$DOCKER_USERNAME = "arbaznazir"
+$DOCKER_USERNAME = "arbaz4"
 $PROJECT_NAME = "bus-pricing"
 $VERSION_TAG = "latest"
 
@@ -14,7 +14,8 @@ Write-Host ""
 try {
     docker info > $null 2>&1
     Write-Host "✅ Docker is running" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "❌ Error: Docker is not running. Please start Docker Desktop." -ForegroundColor Red
     exit 1
 }

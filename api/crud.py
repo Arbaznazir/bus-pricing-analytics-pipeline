@@ -11,7 +11,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import logging
 
-from . import models, schemas
+import models
+import schemas
 
 logger = logging.getLogger(__name__)
 

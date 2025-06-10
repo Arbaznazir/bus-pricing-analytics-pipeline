@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:13
+    container_name: bus_pricing_db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-bususer}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-buspassword}
+      - POSTGRES_DB=${POSTGRES_DB:-busdb}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - bus_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bususer} -d ${POSTGRES_DB:-busdb}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # FastAPI Service (Using pre-built Docker Hub image)
+  api:
+    image: arbaz4/bus-pricing-api:latest
+    container_name: bus_pricing_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-bususer}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-buspassword}
+      - POSTGRES_DB=${POSTGRES_DB:-busdb}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    networks:
+      - bus_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  bus_network:
+    driver: bridge 
