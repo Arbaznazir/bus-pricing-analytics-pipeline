@@ -1,10 +1,10 @@
-# 🎓 NOVA Bus Pricing Pipeline - Presentation Guide
+# 🎓 Bus Pricing Analytics Pipeline - Presentation Guide
 
 ## 🎯 Executive Summary
 
-**NOVA** is a comprehensive data engineering pipeline that processes bus schedule and occupancy data to provide intelligent dynamic pricing recommendations. Built with modern microservices architecture, it demonstrates production-ready capabilities in data processing, real-time analytics, and automated operations.
+I've built a comprehensive data engineering pipeline that processes bus schedule and occupancy data to provide intelligent dynamic pricing recommendations. This production-ready system demonstrates modern microservices architecture with capabilities in data processing, real-time analytics, and automated operations.
 
-**Key Achievement**: A complete data engineering solution showcasing skills directly applicable to transportation analytics, dynamic pricing, and enterprise data pipelines.
+**What I've Achieved**: A complete data engineering solution showcasing skills directly applicable to transportation analytics, dynamic pricing, and enterprise data pipelines.
 
 ## 📊 Presentation Structure (15-20 minutes)
 

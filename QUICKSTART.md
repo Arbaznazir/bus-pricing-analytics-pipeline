@@ -1,323 +1,399 @@
-# 🚀 Quick Start Guide - Bus Pricing Pipeline
+# 🚀 Quick Start Guide - Bus Pricing Analytics Pipeline
 
-This guide will get you up and running with the NOVA Bus Pricing Pipeline in under 10 minutes.
+This guide will get you up and running with my Bus Pricing Analytics Pipeline in under 5 minutes. Just copy and paste the commands - everything is designed to work out of the box!
 
 ## 📋 Prerequisites
 
 - **Docker** (20.10+) and **Docker Compose** (2.0+)
 - **Git** for cloning the repository
-- **Python 3.9+** (optional, for running demo script locally)
+- **Python 3.9+** (for running the demo)
 - **8GB RAM** and **2+ CPU cores** recommended
 
-## 🛠️ Quick Setup (5 Minutes)
+## 🚀 **Method 1: One-Command Setup (Recommended)**
 
-### 1. Clone and Navigate
-
-```bash
-git clone <repository-url>
-cd UniProject
-```
-
-### 2. Environment Configuration
+**Copy these commands directly into your terminal:**
 
 ```bash
-# Copy environment template
-cp .env.example .env
+# Clone the repository
+git clone https://github.com/Arbaznazir/bus-pricing-analytics-pipeline.git
+cd bus-pricing-analytics-pipeline
 
-# The default configuration works out of the box
-# Optionally edit .env to customize settings
-```
-
-### 3. Start All Services
-
-```bash
-# Build and start all services (database, API, ETL, scheduler)
+# Start everything with Docker (this will take 2-3 minutes)
 docker-compose up --build -d
 
-# Check all services are running
-docker-compose ps
-```
+# Wait for services to initialize
+timeout 60 2>/dev/null || sleep 60
 
-### 4. Verify System Health
-
-```bash
-# Wait for all services to be ready (about 30-60 seconds)
-sleep 60
-
-# Check API health
-curl http://localhost:8000/health
-
-# Or run the demo script
-python demo.py --quick
-```
-
-## 🎯 Core Services
-
-| Service       | Port | Description                                     |
-| ------------- | ---- | ----------------------------------------------- |
-| **API**       | 8000 | FastAPI backend with analytics and pricing      |
-| **Database**  | 5432 | PostgreSQL with bus schedule and occupancy data |
-| **ETL**       | -    | PySpark-based data processing pipeline          |
-| **Scheduler** | -    | Automated job scheduling and monitoring         |
-
-## 🧪 Testing the System
-
-### 1. API Documentation
-
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-### 2. Sample API Calls
-
-```bash
-# Get all routes
-curl http://localhost:8000/routes
-
-# Get occupancy analytics
-curl http://localhost:8000/analytics/occupancy
-
-# Get pricing suggestion
-curl -X POST http://localhost:8000/pricing/suggest \
-  -H "Content-Type: application/json" \
-  -d '{
-    "route_id": 1,
-    "seat_type": "regular",
-    "current_occupancy_rate": 0.8,
-    "departure_time": "2025-06-15T10:00:00",
-    "current_fare": 350.0
-  }'
-```
-
-### 3. Run Full Demo
-
-```bash
-# Complete demonstration with all features
+# Run the interactive demo
 python demo.py
-
-# Quick demo (essential features only)
-python demo.py --quick
 ```
 
-## 📊 Key Features to Explore
+**🎉 That's it! Your system is running!**
 
-### 1. Dynamic Pricing Engine
+**Open these URLs in your browser:**
 
-Test different scenarios:
+- **API Documentation**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
 
-- High occupancy → Price increase
-- Low occupancy → Price reduction
-- Peak hours → Premium pricing
-- Last-minute booking → Higher prices
-- Early booking → Discounts
+## 🛠️ **Method 2: Step-by-Step Local Development**
 
-### 2. Data Analytics
-
-- Route performance metrics
-- Occupancy rate analysis
-- Revenue optimization insights
-- Data quality monitoring
-
-### 3. Real-time Pipeline
-
-- Automatic data ingestion
-- Data validation and cleaning
-- Quality issue detection
-- Scheduled processing
-
-## 🔧 Development Mode
-
-### 1. Local Development Setup
+**For developers who want to run components locally:**
 
 ```bash
-# Install Python dependencies
+# 1. Set up Python environment
+python -m venv venv
+
+# 2. Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# 3. Install all dependencies
 pip install -r requirements.txt
-pip install -r api/requirements.txt
 
-# Start database only
-docker-compose up -d postgres
+# 4. Set up SQLite for local development
+export DATABASE_URL="sqlite:///./bus_data.db"
 
-# Run API locally for development
+# 5. Initialize the database
+python -c "from api.models import Base, engine; Base.metadata.create_all(engine)"
+
+# 6. Start the API server (keep this terminal open)
 cd api
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+python main.py
 
-### 2. Running Tests
+# 7. Open new terminal, start the scheduler
+cd scheduler
+python scheduler.py
 
-```bash
-# Run all tests
-pytest
-
-# Run specific test categories
-pytest -m unit          # Unit tests only
-pytest -m integration   # Integration tests only
-pytest tests/test_api.py # API tests only
-```
-
-### 3. Data Generation
-
-```bash
-# Generate sample data
+# 8. Generate some test data
 cd data_simulator
 python simulator.py
 
-# Run ETL manually
-cd etl
-python etl_job.py
+# 9. Run the demo
+python demo.py
 ```
 
-## 🐛 Troubleshooting
+## 🎯 **Verify Everything is Working**
 
-### Common Issues
-
-**1. Port Already in Use**
+### **1. Check System Health**
 
 ```bash
-# Check what's using port 8000
+# Quick health check
+curl http://localhost:8000/health
+
+# Check all containers are running (if using Docker)
+docker-compose ps
+
+# Expected output: All services should show "Up" status
+```
+
+### **2. Test Core API Endpoints**
+
+```bash
+# Get all available routes
+curl http://localhost:8000/routes/
+
+# Create a new route
+curl -X POST "http://localhost:8000/routes/" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "route_name": "Mumbai-Pune",
+       "origin": "Mumbai",
+       "destination": "Pune",
+       "distance_km": 148,
+       "base_fare": 350.0
+     }'
+
+# Test dynamic pricing (copy this exactly)
+curl -X POST "http://localhost:8000/pricing/suggest" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "route_id": 1,
+       "seat_type": "standard",
+       "current_occupancy_rate": 0.85,
+       "departure_time": "2024-06-15T08:00:00",
+       "current_fare": 350.0
+     }'
+```
+
+### **3. Explore the Interactive API**
+
+**Open in your browser:** http://localhost:8000/docs
+
+This gives you a beautiful interface where you can:
+
+- Test all API endpoints directly
+- See request/response formats
+- Download API specifications
+- Try different scenarios
+
+## 📊 **Key Features You Can Test**
+
+### **Dynamic Pricing Scenarios**
+
+**Copy these commands to test different pricing scenarios:**
+
+```bash
+# High occupancy during peak hours (should increase price)
+curl -X POST "http://localhost:8000/pricing/suggest" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "route_id": 1,
+       "seat_type": "standard",
+       "current_occupancy_rate": 0.9,
+       "departure_time": "2024-06-15T08:00:00",
+       "current_fare": 300.0
+     }'
+
+# Low occupancy during off-peak (should decrease price)
+curl -X POST "http://localhost:8000/pricing/suggest" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "route_id": 1,
+       "seat_type": "standard",
+       "current_occupancy_rate": 0.3,
+       "departure_time": "2024-06-15T14:30:00",
+       "current_fare": 300.0
+     }'
+
+# Last-minute booking (should increase price)
+curl -X POST "http://localhost:8000/pricing/suggest" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "route_id": 1,
+       "seat_type": "standard",
+       "current_occupancy_rate": 0.7,
+       "departure_time": "2024-01-15T10:00:00",
+       "current_fare": 300.0
+     }'
+```
+
+### **Analytics & Data Quality**
+
+```bash
+# Get occupancy analytics
+curl "http://localhost:8000/analytics/occupancy?route_id=1"
+
+# Check data quality report
+curl http://localhost:8000/data-quality/report
+
+# Get revenue insights
+curl http://localhost:8000/analytics/revenue
+
+# Check system metrics
+curl http://localhost:8000/metrics
+```
+
+## 🧪 **Run Tests to Validate**
+
+**Execute the complete test suite:**
+
+```bash
+# Run all tests (should show 55 tests passing)
+python -m pytest tests/ -v
+
+# Run with coverage report
+python -m pytest tests/ --cov=. --cov-report=html
+
+# Run specific categories
+python -m pytest tests/test_api.py -v      # API tests
+python -m pytest tests/test_etl.py -v      # ETL and pricing tests
+```
+
+**Expected output:**
+
+```
+======================== 55 passed, 0 failed in 0.89s ========================
+```
+
+## 🔍 **Understanding the System**
+
+### **Core Services Running**
+
+| **Service**   | **Port** | **Purpose**                                     |
+| ------------- | -------- | ----------------------------------------------- |
+| **API**       | 8000     | FastAPI backend with analytics and pricing      |
+| **Database**  | 5432     | PostgreSQL with bus schedule and occupancy data |
+| **ETL**       | -        | PySpark-based data processing pipeline          |
+| **Scheduler** | -        | Automated job scheduling and monitoring         |
+
+### **Data Flow Process**
+
+1. **Data Generation**: `data_simulator/` creates realistic bus data
+2. **ETL Processing**: `etl/` processes and validates the data
+3. **API Layer**: `api/` serves the processed data with dynamic pricing
+4. **Scheduling**: `scheduler/` automates the entire pipeline
+
+### **Monitor Real-Time Operations**
+
+```bash
+# Watch live logs from all services
+docker-compose logs -f
+
+# Watch specific service logs
+docker-compose logs -f api
+docker-compose logs -f postgres
+
+# Check system performance
+docker stats
+```
+
+## 🎬 **5-Minute Demo Script**
+
+**Follow this exact sequence for a comprehensive demo:**
+
+```bash
+# 1. System Health Check (30 seconds)
+echo "=== System Health Check ==="
+curl http://localhost:8000/health
+docker-compose ps
+
+# 2. Dynamic Pricing Demo (2 minutes)
+echo "=== Dynamic Pricing Demo ==="
+python demo.py --pricing-scenarios
+
+# 3. Analytics Overview (1 minute)
+echo "=== Analytics Overview ==="
+curl http://localhost:8000/analytics/occupancy
+curl http://localhost:8000/data-quality/report
+
+# 4. API Documentation (1 minute)
+echo "=== Open in browser: http://localhost:8000/docs ==="
+
+# 5. Test Results (30 seconds)
+echo "=== Test Validation ==="
+python -m pytest tests/ --tb=short -q
+```
+
+## 🔧 **Development & Customization**
+
+### **Adding New Features**
+
+```bash
+# Create a new branch for your feature
+git checkout -b feature/my-new-feature
+
+# Make your changes to the code
+# Test your changes
+python -m pytest tests/ -v
+
+# Run the demo to see your changes
+python demo.py
+```
+
+### **Customizing for Your Use Case**
+
+**Edit these files to customize:**
+
+- `api/schemas.py` - Data models and validation
+- `etl/model.py` - Pricing algorithms and business logic
+- `data_simulator/simulator.py` - Test data generation
+- `docker-compose.yml` - Service configuration
+
+### **Environment Configuration**
+
+```bash
+# Create custom environment file
+cp .env.example .env
+
+# Edit .env to customize:
+# - Database connection strings
+# - API configuration
+# - Performance tuning parameters
+```
+
+## 🐛 **Troubleshooting Guide**
+
+### **Common Issues & Solutions**
+
+**1. Port 8000 already in use:**
+
+```bash
+# Find what's using the port
 lsof -i :8000
 
-# Kill process if needed
+# Kill the process
 kill -9 <PID>
 
 # Or change port in docker-compose.yml
 ```
 
-**2. Database Connection Failed**
+**2. Docker containers not starting:**
 
 ```bash
-# Check database logs
-docker-compose logs postgres
+# Check Docker logs
+docker-compose logs
 
-# Restart database
-docker-compose restart postgres
+# Restart all services
+docker-compose down
+docker-compose up --build -d
 ```
 
-**3. Out of Memory**
+**3. Database connection errors:**
+
+```bash
+# Check PostgreSQL logs
+docker-compose logs postgres
+
+# Reset database
+docker-compose down -v
+docker-compose up -d postgres
+```
+
+**4. Python dependencies issues:**
+
+```bash
+# Reinstall dependencies
+pip install --upgrade pip
+pip install -r requirements.txt --force-reinstall
+```
+
+### **Performance Issues**
 
 ```bash
 # Check resource usage
 docker stats
 
-# Reduce PySpark memory in docker-compose.yml
-# or increase Docker memory allocation
+# Reduce memory usage in docker-compose.yml:
+# - Lower PySpark memory allocation
+# - Reduce worker processes
 ```
 
-**4. Services Not Starting**
+## 🚀 **Next Steps**
+
+### **Explore Advanced Features**
+
+1. **Custom Pricing Algorithms**: Modify `etl/model.py`
+2. **New Data Sources**: Add ETL jobs in `etl/`
+3. **Enhanced Analytics**: Extend API endpoints in `api/main.py`
+4. **Production Deployment**: Use `docker-compose.prod.yml`
+
+### **Production Deployment**
 
 ```bash
-# Check all service logs
-docker-compose logs
+# For production deployment
+docker-compose -f docker-compose.prod.yml up -d
 
-# Restart specific service
-docker-compose restart api
-
-# Full cleanup and restart
-docker-compose down -v
-docker-compose up --build
+# For Kubernetes deployment
+kubectl apply -f k8s/
 ```
 
-### Service Health Checks
+### **Integration with Your System**
 
-```bash
-# Check individual service status
-docker-compose exec api curl localhost:8000/health
-docker-compose exec postgres pg_isready
-docker-compose logs scheduler --tail=20
-```
-
-## 🔍 Monitoring and Logs
-
-### View Logs
-
-```bash
-# All services
-docker-compose logs
-
-# Specific service
-docker-compose logs api
-docker-compose logs etl
-docker-compose logs scheduler
-
-# Follow logs in real-time
-docker-compose logs -f api
-```
-
-### System Resources
-
-```bash
-# Resource usage by service
-docker stats
-
-# Disk usage
-docker system df
-
-# Database size
-docker-compose exec postgres psql -U bususer -d busdb -c "
-  SELECT
-    schemaname,
-    tablename,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-  FROM pg_tables
-  WHERE schemaname = 'public'
-  ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
-"
-```
-
-## 📈 Performance Optimization
-
-### For Production
-
-1. **Increase Resources**: Allocate more CPU/memory in docker-compose.yml
-2. **Database Tuning**: Use the optimized settings from sql/init.sql
-3. **Caching**: Enable Redis for API response caching
-4. **Load Balancing**: Add multiple API replicas
-
-### For Development
-
-1. **Hot Reload**: Use volume mounts for code changes
-2. **Debug Mode**: Set LOG_LEVEL=DEBUG in .env
-3. **Profile**: Use built-in performance monitoring endpoints
-
-## 🚨 Data Pipeline Monitoring
-
-### ETL Job Status
-
-```bash
-# Check ETL job history
-curl http://localhost:8000/admin/etl/history
-
-# Manual ETL trigger
-curl -X POST http://localhost:8000/admin/etl/trigger
-```
-
-### Data Quality Metrics
-
-```bash
-# Get quality report
-curl http://localhost:8000/data-quality/report
-
-# View quality issues
-curl http://localhost:8000/data-quality/issues
-```
-
-## 🎓 Next Steps
-
-1. **Explore the API**: Use Swagger UI to test all endpoints
-2. **Review the Code**: Check out the clean, documented codebase
-3. **Run Tests**: Execute the comprehensive test suite
-4. **Customize**: Modify pricing models and business rules
-5. **Scale**: Deploy to cloud infrastructure
-
-## 📞 Getting Help
-
-- **Logs**: Always check `docker-compose logs` first
-- **Health**: Use the `/health` endpoint for system status
-- **Demo**: Run `python demo.py` to verify functionality
-- **Tests**: Execute `pytest` to ensure everything works
+- **API Integration**: Use the REST endpoints for your applications
+- **Database Access**: Connect directly to PostgreSQL for custom queries
+- **Data Export**: Use analytics endpoints for reporting
+- **Webhook Integration**: Extend API for real-time notifications
 
 ---
 
-**🎉 You're all set!** The Bus Pricing Pipeline is now running and ready to demonstrate professional-grade data engineering capabilities.
+**🎯 You now have a fully functional bus pricing analytics system running locally!**
 
-**API Endpoint**: http://localhost:8000/docs  
-**Demo Script**: `python demo.py`  
-**System Health**: http://localhost:8000/health
+**For questions or issues:**
+
+- Check the logs: `docker-compose logs`
+- Run validation: `python validate_system.py`
+- View documentation: http://localhost:8000/docs
+
+**Ready to explore the system? Start with `python demo.py` for a guided tour!** 🚀
