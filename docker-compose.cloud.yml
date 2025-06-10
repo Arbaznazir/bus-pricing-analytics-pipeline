@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:13
+    container_name: bus_pricing_db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-bususer}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-buspassword}
+      - POSTGRES_DB=${POSTGRES_DB:-busdb}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - bus_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bususer} -d ${POSTGRES_DB:-busdb}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # FastAPI Service
+  api:
+    image: arbaznazir/bus-pricing-api:latest
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: bus_pricing_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-bususer}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-buspassword}
+      - POSTGRES_DB=${POSTGRES_DB:-busdb}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    networks:
+      - bus_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ETL Service
+  etl:
+    image: arbaznazir/bus-pricing-etl:latest
+    build:
+      context: ./etl
+      dockerfile: Dockerfile
+    container_name: bus_etl
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-bususer}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-buspassword}
+      - POSTGRES_DB=${POSTGRES_DB:-busdb}
+      - RAW_DATA_PATH=/app/data/raw
+      - PROCESSED_DATA_PATH=/app/data/processed
+      - ERROR_DATA_PATH=/app/data/error
+      - MAX_FARE_THRESHOLD=100000
+      - MIN_FARE_THRESHOLD=1
+      - LOG_LEVEL=INFO
+      - SPARK_DRIVER_MEMORY=512m
+      - SPARK_EXECUTOR_MEMORY=512m
+      - SPARK_SQL_ADAPTIVE_ENABLED=true
+    volumes:
+      - app_data:/app/data
+    networks:
+      - bus_network
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
+
+  # Scheduler Service
+  scheduler:
+    image: arbaznazir/bus-pricing-scheduler:latest
+    build:
+      context: ./scheduler
+      dockerfile: Dockerfile
+    container_name: bus_scheduler
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-bususer}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-buspassword}
+      - POSTGRES_DB=${POSTGRES_DB:-busdb}
+      - API_HOST=api
+      - API_PORT=8000
+      - RAW_DATA_PATH=/app/data/raw
+      - PROCESSED_DATA_PATH=/app/data/processed
+      - ETL_SCHEDULE_INTERVAL_SECONDS=300
+      - CLEANUP_INTERVAL_HOURS=24
+      - HEALTH_CHECK_INTERVAL_MINUTES=5
+      - FILE_RETENTION_DAYS=7
+      - LOG_LEVEL=INFO
+    volumes:
+      - app_data:/app/data
+      - ./etl:/app/etl:ro
+      - ./data_simulator:/app/data_simulator:ro
+    networks:
+      - bus_network
+    restart: unless-stopped
+
+  # Data Simulator (for cloud demo)
+  data_simulator:
+    image: arbaznazir/bus-pricing-simulator:latest
+    build:
+      context: ./data_simulator
+      dockerfile: Dockerfile
+    container_name: bus_data_simulator
+    environment:
+      - OUTPUT_PATH=/app/data/raw
+      - NUM_SCHEDULES=50
+      - NUM_DAYS=3
+      - NUM_ROUTES=8
+      - NUM_OPERATORS=6
+      - LOG_LEVEL=INFO
+    volumes:
+      - app_data:/app/data
+    networks:
+      - bus_network
+    restart: "no"
+
+volumes:
+  db_data:
+    driver: local
+  app_data:
+    driver: local
+
+networks:
+  bus_network:
+    driver: bridge 
